@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數位識讀工作坊：AIGC數位小偵探</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --accent-color: #06b6d4;
+            --card-bg: rgba(30, 41, 59, 0.6);
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: auto;
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 24px;
+            padding: 40px 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #22d3ee, #a855f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        p#info-text {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        .game-area {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 24px;
+            position: relative;
+            margin-top: 20px;
+            cursor: crosshair;
+        }
+
+        .img-wrapper {
+            position: relative;
+            width: calc(50% - 12px);
+            min-width: 300px;
+            overflow: hidden;
+            border-radius: 16px;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            background: #000;
+        }
+
+        .img-wrapper:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(34, 211, 238, 0.2);
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            pointer-events: none;
+            opacity: 0.95;
+            transition: opacity 0.3s ease;
+        }
+
+        .img-wrapper:hover img {
+            opacity: 1;
+        }
+
+        .label {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+        }
+
+        /* 圈選框樣式 */
+        .circle {
+            position: absolute;
+            border: 3px solid #f43f5e;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+            box-shadow: 0 0 15px #f43f5e, inset 0 0 10px #f43f5e;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .circle::after {
+            content: '';
+            position: absolute;
+            top: -6px; left: -6px; right: -6px; bottom: -6px;
+            border-radius: 50%;
+            border: 1px solid rgba(244, 63, 94, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes popIn {
+            to { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        button {
+            padding: 14px 36px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(6, 182, 212, 0.5);
+            background: linear-gradient(135deg, #0891b2, #2563eb);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 5px 10px -2px rgba(6, 182, 212, 0.3);
+        }
+
+        .controls {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .prev-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            box-shadow: none;
+        }
+
+        .prev-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-stage {
+            display: none;
+            animation: fadeInScale 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        #end-game {
+            display: none;
+            margin-top: 40px;
+            animation: fadeInScale 0.8s ease-out;
+            padding: 40px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        #end-game h2 {
+            font-size: 2.5rem;
+            color: #34d399;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
+        }
+
+        .status-bar {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px auto;
+            max-width: 600px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .click-count {
+            font-weight: 700;
+            color: #f43f5e;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stage-indicator {
+            font-weight: 700;
+            color: #94a3b8;
+        }
+
+        .dot-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: #f43f5e;
+            box-shadow: 0 0 10px #f43f5e;
+            transform: scale(1.2);
+        }
+
+        @media (max-width: 768px) {
+            .img-wrapper {
+                width: 100%;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .container {
+                padding: 30px 15px;
+            }
+            .status-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>AIGC 數位小偵探</h1>
+        <p id="info-text">仔細觀察，找出真實圖片與 AI 圖片的 5 個相異之處！</p>
+
+        <button id="start-btn" onclick="startGame()">開始挑戰</button>
+
+        <div class="status-bar" id="status-bar">
+            <div class="stage-indicator">當前關卡：<span id="current-stage-num">1</span> / 5</div>
+            <div class="click-count">
+                已標記差異：
+                <div class="dot-group" id="dot-group">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第一關 -->
+        <div class="game-stage" id="stage-0">
+            <div class="game-area">
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageA1.jpg" alt="真實圖片">
+                    <div class="label">真實圖片</div>
+                </div>
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageB1.jpg" alt="AI生成">
+                    <div class="label">AI 生成</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button onclick="prevStage()" class="prev-btn">上一關</button>
+                <button onclick="nextStage()" class="next-btn">下一關</button>
+            </div>
+        </div>
+
+        <!-- 第二關 -->
+        <div class="game-stage" id="stage-1">
+            <div class="game-area">
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageA2.jpg" alt="真實圖片">
+                    <div class="label">真實圖片</div>
+                </div>
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageB2.jpg" alt="AI生成">
+                    <div class="label">AI 生成</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button onclick="prevStage()" class="prev-btn">上一關</button>
+                <button onclick="nextStage()" class="next-btn">下一關</button>
+            </div>
+        </div>
+
+        <!-- 第三關 -->
+        <div class="game-stage" id="stage-2">
+            <div class="game-area">
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageA3.jpg" alt="真實圖片">
+                    <div class="label">真實圖片</div>
+                </div>
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageB3.jpg" alt="AI生成">
+                    <div class="label">AI 生成</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button onclick="prevStage()" class="prev-btn">上一關</button>
+                <button onclick="nextStage()" class="next-btn">下一關</button>
+            </div>
+        </div>
+
+        <!-- 第四關 -->
+        <div class="game-stage" id="stage-3">
+            <div class="game-area">
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageA4.jpg" alt="真實圖片">
+                    <div class="label">真實圖片</div>
+                </div>
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageB4.jpg" alt="AI生成">
+                    <div class="label">AI 生成</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button onclick="prevStage()" class="prev-btn">上一關</button>
+                <button onclick="nextStage()" class="next-btn">下一關</button>
+            </div>
+        </div>
+
+        <!-- 第五關 -->
+        <div class="game-stage" id="stage-4">
+            <div class="game-area">
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageA5.jpg" alt="真實圖片">
+                    <div class="label">真實圖片</div>
+                </div>
+                <div class="img-wrapper" onclick="handleTap(event)">
+                    <img src="imageB5.jpg" alt="AI生成">
+                    <div class="label">AI 生成</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button onclick="prevStage()" class="prev-btn">上一關</button>
+                <button onclick="nextStage()" class="next-btn">完成挑戰</button>
+            </div>
+        </div>
+
+        <!-- 結束畫面 -->
+        <div id="end-game">
+            <h2>🎉 太棒了！挑戰完成</h2>
+            <p style="color: #6ee7b7; font-size: 1.2rem; margin-bottom: 30px;">你已經具備了敏銳的數位識讀能力！</p>
+            <button onclick="window.location.href='https://forms.gle/Tkxvu5hib8o7NspC8'">前往填寫活動報名表單</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStage = 0;
+        const stages = document.querySelectorAll('.game-stage');
+        const totalStages = stages.length;
+        const clicksToNext = 5;
+        let currentClicks = 0;
+
+        function startGame() {
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('info-text').style.display = 'none';
+            document.getElementById('status-bar').style.display = 'flex';
+            showStage(0);
+        }
+
+        function updateDots() {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                if (index < currentClicks) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function showStage(index) {
+            currentStage = index;
+            document.getElementById('current-stage-num').innerText = index + 1;
+
+            stages.forEach((s, i) => {
+                if (i === index) {
+                    s.style.display = 'block';
+                    // Trigger reflow for animation
+                    void s.offsetWidth;
+                    s.style.animation = 'none';
+                    s.style.animation = 'fadeInScale 0.6s ease-out forwards';
+                } else {
+                    s.style.display = 'none';
+                }
+            });
+
+            if (index < totalStages) {
+                currentClicks = 0;
+                updateDots();
+
+                const prevBtn = stages[index].querySelector('.prev-btn');
+                if (prevBtn) {
+                    prevBtn.style.visibility = (index === 0) ? 'hidden' : 'visible';
+                }
+            } else {
+                showEnd();
+            }
+        }
+
+        function handleTap(event) {
+            if (currentClicks >= clicksToNext) return;
+            
+            markDifference(event);
+            currentClicks++;
+            updateDots();
+
+            if (currentClicks >= clicksToNext) {
+                setTimeout(() => {
+                    nextStage();
+                }, 1000);
+            }
+        }
+
+        function markDifference(event) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const circle = document.createElement('div');
+            circle.className = 'circle';
+            circle.style.width = '48px';
+            circle.style.height = '48px';
+            circle.style.left = `${x}px`;
+            circle.style.top = `${y}px`;
+
+            event.currentTarget.appendChild(circle);
+        }
+
+        function prevStage() {
+            if (currentStage > 0) {
+                showStage(currentStage - 1);
+            }
+        }
+
+        function nextStage() {
+            if (currentStage < totalStages - 1) {
+                showStage(currentStage + 1);
+            } else {
+                showEnd();
+            }
+        }
+
+        function showEnd() {
+            document.getElementById('status-bar').style.display = 'none';
+            stages.forEach(s => s.style.display = 'none');
+            const endScreen = document.getElementById('end-game');
+            endScreen.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
